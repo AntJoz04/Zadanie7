@@ -233,4 +233,30 @@ public class AppointmentService : IAppointmentService
 
         await updateCmd.ExecuteNonQueryAsync();
     }
+
+    public async Task DeleteAppointmentAsync(int idAppointment)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+        var checkCmd = new SqlCommand(
+            "SELECT Status FROM Appointments WHERE IdAppointment = @Id",
+            connection);
+        checkCmd.Parameters.Add("@Id", SqlDbType.Int).Value = idAppointment;
+        var statusObj = await checkCmd.ExecuteScalarAsync();
+        if (statusObj == null)
+        {
+            throw new Exception("NOT_FOUND");
+        }
+        var status = (string)statusObj;
+        if (status == "Completed")
+        {
+            throw new Exception("CANNOT_DELETE_COMPLETED");
+        }
+        var deleteCmd = new SqlCommand(
+            "DELETE FROM Appointments WHERE IdAppointment = @Id",
+            connection);
+        deleteCmd.Parameters.Add("@Id", SqlDbType.Int).Value = idAppointment;
+        
+        await deleteCmd.ExecuteNonQueryAsync();
+    }
 }

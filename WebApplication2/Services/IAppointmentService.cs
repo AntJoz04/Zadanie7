@@ -8,6 +8,8 @@ public interface IAppointmentService
     Task<AppointmentDetailsDTO?> getAppointmentByIdAsync(int idAppointment);
     Task<int> CreateAppointmentAsync(CreateAppointmentRequestDto dto);
     Task UpdateAppointmentAsync(int idAppointment, UpdateAppointmentRequestDto dto);
+    Task DeleteAppointmentAsync(int idAppointment);
+
 
 
 

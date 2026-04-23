@@ -74,5 +74,24 @@ public class AppointmentController : ControllerBase
             };
         }
     }
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeleteAppointment(int id)
+    {
+        try
+        {
+            await _service.DeleteAppointmentAsync(id);
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return ex.Message switch
+            {
+                "NOT_FOUND" => NotFound(new { message = "Appointment not found" }),
+                "CANNOT_DELETE_COMPLETED" => Conflict(new { message = "Cannot delete completed appointment" }),
+                _ => BadRequest(new { message = ex.Message })
+            };
+        }
+    }
+
 
 }
