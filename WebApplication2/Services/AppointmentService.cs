@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using System.Data;
+using Microsoft.Data.SqlClient;
 using WebApplication2.DTOs;
 
 namespace WebApplication2.Services;
@@ -12,7 +13,7 @@ public class AppointmentService : IAppointmentService
         _connectionString = configuration.GetConnectionString("DefaultConnection");
     }
 
-    public async Task<IEnumerable<AppointmentListDto>> getAllAppointmentsAsync()
+    public async Task<IEnumerable<AppointmentListDto>> getAllAppointmentsAsync(string? status=null,string? patientLastName = null)
     {
         var query = @"
          SELECT
@@ -25,14 +26,18 @@ public class AppointmentService : IAppointmentService
             FROM Appointments a
             JOIN Patients p ON p.IdPatient = a.IdPatient
             ORDER BY a.AppointmentDate";
+        
+        var appointments = new List<AppointmentListDto>();
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync();
 
         await using var command = new SqlCommand();
         command.Connection=connection;
         command.CommandText = query;
+        command.Parameters.Add("@Status", SqlDbType.NVarChar,50).Value = (object?) status ?? DBNull.Value;
+        command.Parameters.Add("@PatientLastName", SqlDbType.NVarChar,100).Value = (object?) patientLastName ?? DBNull.Value;
         await using var reader = await command.ExecuteReaderAsync();
-        var appointments = new List<AppointmentListDto>();
+       
         while (await reader.ReadAsync())
         {
             var appointment = new AppointmentListDto()

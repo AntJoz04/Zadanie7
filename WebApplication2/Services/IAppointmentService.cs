@@ -4,5 +4,5 @@ namespace WebApplication2.Services;
 
 public interface IAppointmentService
 {
-    Task<IEnumerable<AppointmentListDto>> getAllAppointmentsAsync();
+    Task<IEnumerable<AppointmentListDto>> getAllAppointmentsAsync(string? status=null,string? patientLastName = null);
 }
