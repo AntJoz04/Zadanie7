@@ -50,4 +50,29 @@ public class AppointmentController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateAppointment(int id, [FromBody] UpdateAppointmentRequestDto dto)
+    {
+        try
+        {
+            await _service.UpdateAppointmentAsync(id, dto);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return ex.Message switch
+            {
+                "NOT_FOUND" => NotFound(new { message = "Appointment not found" }),
+                "INVALID_PATIENT" => BadRequest(new { message = "Invalid or inactive patient" }),
+                "INVALID_DOCTOR" => BadRequest(new { message = "Invalid or inactive doctor" }),
+                "INVALID_STATUS" => BadRequest(new { message = "Invalid status" }),
+                "CANNOT_CHANGE_DATE" => Conflict(new { message = "Cannot change date of completed appointment" }),
+                "CONFLICT" => Conflict(new { message = "Doctor already has appointment at this time" }),
+                "INVALID_REASON" => BadRequest(new { message = "Reason too long" }),
+                "INVALID_NOTES" => BadRequest(new { message = "Internal notes too long" }),
+                _ => BadRequest(new { message = ex.Message })
+            };
+        }
+    }
+
 }

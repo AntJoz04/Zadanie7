@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Xml;
 using Microsoft.Data.SqlClient;
 using WebApplication2.DTOs;
 
@@ -146,5 +147,90 @@ public class AppointmentService : IAppointmentService
         insertCmd.Parameters.Add("@Reason", SqlDbType.NVarChar, 250).Value = dto.Reason;
         var newId = Convert.ToInt32(await insertCmd.ExecuteScalarAsync());
         return newId;
+    }
+
+    public async Task UpdateAppointmentAsync(int idAppointment, UpdateAppointmentRequestDto dto)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+        var checkAppointmentCmd = new SqlCommand(
+            "SELECT Status, IdDoctor FROM Appointments WHERE IdAppointment = @Id",
+            connection);
+        checkAppointmentCmd.Parameters.Add("@Id", SqlDbType.Int).Value = idAppointment;
+        string? currentStatus = null;
+        int currentDoctorID = 0;
+
+        await using (var reader = await checkAppointmentCmd.ExecuteReaderAsync())
+        {
+            if (!await reader.ReadAsync())
+                throw new Exception("NOT_FOUND");
+            currentStatus = reader.GetString(0);
+            currentDoctorID = reader.GetInt32(1);
+        }
+
+        var checkPatientCmd = new SqlCommand("SELECT COUNT(*) FROM Patients WHERE IdPatient = @Id AND IsActive = 1",
+            connection);
+        checkPatientCmd.Parameters.Add("@Id", SqlDbType.Int).Value = dto.IdPatient;
+        if ((int)await checkPatientCmd.ExecuteScalarAsync() == 0)
+            throw new Exception("INVALID_PATIENT");
+        var checkDoctorCmd = new SqlCommand(
+            "SELECT COUNT(*) FROM Doctors WHERE IdDoctor = @Id AND IsActive = 1",
+            connection);
+        checkDoctorCmd.Parameters.Add("@Id", SqlDbType.Int).Value = dto.IdDoctor;
+        if ((int)await checkDoctorCmd.ExecuteScalarAsync() == 0)
+            throw new Exception($"INVALID_DOCTOR");
+
+        var allowedStatuses = new[] { "Scheduled", "Completed", "Cancelled" };
+        if(!allowedStatuses.Contains(dto.Status))
+            throw new Exception("INVALID_STATUS");
+
+        if (currentStatus == "Completed" && dto.AppointmentDate != dto.AppointmentDate)
+        {
+            throw new Exception("CANNOT_CHANGE_DATE");
+        }
+        var conflictCmd = new SqlCommand(
+            @"SELECT COUNT(*) FROM Appointments
+          WHERE IdDoctor = @IdDoctor
+            AND AppointmentDate = @Date
+            AND IdAppointment <> @IdAppointment",
+            connection);
+
+        conflictCmd.Parameters.Add("@IdDoctor", SqlDbType.Int).Value = dto.IdDoctor;
+        conflictCmd.Parameters.Add("@Date", SqlDbType.DateTime2).Value = dto.AppointmentDate;
+        conflictCmd.Parameters.Add("@IdAppointment", SqlDbType.Int).Value = idAppointment;
+        if ((int)await conflictCmd.ExecuteScalarAsync() > 0)
+        {
+            throw new Exception("CONFLICT");
+        }
+        if(dto.Reason.Length>250)
+        {
+            throw new Exception("INVALID_REASON");
+        }
+
+        if (dto.InternalNotes != null && dto.InternalNotes.Length > 500)
+        {
+            throw new Exception("INVALID_NOTES");
+        }
+        
+        var updateCmd = new SqlCommand(
+            @"UPDATE Appointments
+          SET IdPatient = @IdPatient,
+              IdDoctor = @IdDoctor,
+              AppointmentDate = @Date,
+              Status = @Status,
+              Reason = @Reason,
+              InternalNotes = @Notes
+          WHERE IdAppointment = @Id",
+            connection);
+
+        updateCmd.Parameters.Add("@IdPatient", SqlDbType.Int).Value = dto.IdPatient;
+        updateCmd.Parameters.Add("@IdDoctor", SqlDbType.Int).Value = dto.IdDoctor;
+        updateCmd.Parameters.Add("@Date", SqlDbType.DateTime2).Value = dto.AppointmentDate;
+        updateCmd.Parameters.Add("@Status", SqlDbType.NVarChar, 30).Value = dto.Status;
+        updateCmd.Parameters.Add("@Reason", SqlDbType.NVarChar, 250).Value = dto.Reason;
+        updateCmd.Parameters.Add("@Notes", SqlDbType.NVarChar, 500).Value = (object?)dto.InternalNotes ?? DBNull.Value;
+        updateCmd.Parameters.Add("@Id", SqlDbType.Int).Value = idAppointment;
+
+        await updateCmd.ExecuteNonQueryAsync();
     }
 }
