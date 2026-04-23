@@ -1,31 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\s34113\\RiderProjects\\WebApplication2\\WebApplication2\\WebApplication2.csproj": {}
+    "C:\\Users\\antra\\Downloads\\Zadanie7\\WebApplication2\\WebApplication2.csproj": {}
   },
   "projects": {
-    "C:\\Users\\s34113\\RiderProjects\\WebApplication2\\WebApplication2\\WebApplication2.csproj": {
+    "C:\\Users\\antra\\Downloads\\Zadanie7\\WebApplication2\\WebApplication2.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\s34113\\RiderProjects\\WebApplication2\\WebApplication2\\WebApplication2.csproj",
+        "projectUniqueName": "C:\\Users\\antra\\Downloads\\Zadanie7\\WebApplication2\\WebApplication2.csproj",
         "projectName": "WebApplication2",
-        "projectPath": "C:\\Users\\s34113\\RiderProjects\\WebApplication2\\WebApplication2\\WebApplication2.csproj",
-        "packagesPath": "C:\\Users\\s34113\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\s34113\\RiderProjects\\WebApplication2\\WebApplication2\\obj\\",
+        "projectPath": "C:\\Users\\antra\\Downloads\\Zadanie7\\WebApplication2\\WebApplication2.csproj",
+        "packagesPath": "C:\\Users\\antra\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\antra\\Downloads\\Zadanie7\\WebApplication2\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\s34113\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\antra\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -57,6 +51,10 @@
             "Microsoft.Data.SqlClient": {
               "target": "Package",
               "version": "[7.0.0, )"
+            },
+            "Microsoft.VisualStudio.Web.CodeGeneration.Design": {
+              "target": "Package",
+              "version": "[9.0.12, )"
             }
           },
           "imports": [
@@ -78,7 +76,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.302/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Users\\antra\\.dotnet\\sdk\\9.0.313/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
