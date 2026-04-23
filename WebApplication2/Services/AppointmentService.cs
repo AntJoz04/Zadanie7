@@ -61,7 +61,7 @@ public class AppointmentService : IAppointmentService
 
         var query =
             @"SELECT a.IdAppointment,a.AppointmentDate, a.Status,a.Reason,p.FirstName + ' ' + p.LastName AS PatientFullName,p.Email AS PatientEmail,
-                     p.Phone AS PatientPhone, d.FirstName + ' ' + d.LastName AS DoctorFullName, d.LicenseNumber AS DoctorLicenseNumber, s.Name as SpecializationName, a.InternalNotes,a.CreatedAt
+                     p.PhoneNumber AS PhoneNumber, d.FirstName + ' ' + d.LastName AS DoctorFullName, d.LicenseNumber AS DoctorLicenseNumber, s.Name as SpecializationName, a.InternalNotes,a.CreatedAt
                      FROM Appointments a
                      JOIN Patients p ON p.IdPatient = a.IdPatient
                      JOIN  Doctors d ON d.IdDoctor = a.IdDoctor
@@ -89,5 +89,62 @@ public class AppointmentService : IAppointmentService
             InternalNotes = reader.IsDBNull(10) ? null : reader.GetString(10),
             CreatedAt = reader.GetDateTime(11)
         };
+    }
+
+    public async Task<int> CreateAppointmentAsync(CreateAppointmentRequestDto dto)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+        var checkPatientcmd = new SqlCommand("SELECT COUNT(*) FROM PATIENTS WHERE IDPATIENT = @Id and IsActive = 1",
+            connection);
+        checkPatientcmd.Parameters.Add("@Id", SqlDbType.Int).Value = dto.IdPatient;
+        var patientExists = (int) await checkPatientcmd.ExecuteScalarAsync()>0;
+        if (!patientExists)
+        {
+            throw new Exception("Patient does not exist");
+        }
+
+        var checkDoctorCmd = new SqlCommand("SELECT COUNT(*) FROM Doctors WHERE IdDoctor = @Id and IsActive =1",connection);
+        checkDoctorCmd.Parameters.Add("@Id", SqlDbType.Int).Value = dto.IdDoctor;
+        var doctorExists = (int)await checkDoctorCmd.ExecuteScalarAsync() > 0;
+        if (!doctorExists)
+        {
+            throw new Exception("Doctor does not exists");
+        }
+
+        if (dto.AppointmentDate < DateTime.UtcNow)
+        {
+            throw new Exception("WRONG DATE");
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.Reason) || dto.Reason.Length > 250)
+        {
+            throw new Exception("Invalid Reason");
+        }
+        var conflictCMD = new SqlCommand(
+            @"SELECT COUNT(*) FROM Appointments 
+          WHERE IdDoctor = @IdDoctor AND AppointmentDate = @Date",
+            connection);
+        conflictCMD.Parameters.Add("@IdDoctor", SqlDbType.Int).Value = dto.IdDoctor;
+        conflictCMD.Parameters.Add("@Date", SqlDbType.DateTime2).Value = dto.AppointmentDate;
+        var conflict = (int) await conflictCMD.ExecuteScalarAsync() > 0;
+        if (conflict)
+        {
+            throw new Exception("Conflict");
+            
+            
+        }
+        var insertCmd = new SqlCommand(
+            @"INSERT INTO Appointments (IdPatient, IdDoctor, AppointmentDate, Status, Reason)
+          VALUES (@IdPatient, @IdDoctor, @Date, 'Scheduled', @Reason);
+          SELECT SCOPE_IDENTITY();",
+            connection);
+
+        insertCmd.Parameters.Add("@IdPatient", SqlDbType.Int).Value = dto.IdPatient;
+        insertCmd.Parameters.Add("@IdDoctor", SqlDbType.Int).Value = dto.IdDoctor;
+        insertCmd.Parameters.Add("@Date", SqlDbType.DateTime2).Value = dto.AppointmentDate;
+        insertCmd.Parameters.Add("@Reason", SqlDbType.NVarChar, 250).Value = dto.Reason;
+        var newId = Convert.ToInt32(await insertCmd.ExecuteScalarAsync());
+        return newId;
     }
 }
