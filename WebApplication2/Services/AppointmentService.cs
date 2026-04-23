@@ -14,7 +14,17 @@ public class AppointmentService : IAppointmentService
 
     public async Task<IEnumerable<AppointmentListDto>> getAllAppointmentsAsync()
     {
-        var query = "SELECT IdAppointment, Status FROM Appointments";
+        var query = @"
+         SELECT
+            a.IdAppointment,
+            a.AppointmentDate,
+            a.Status,
+            a.Reason,
+            p.FirstName + ' ' + p.LastName AS PatientFullName,
+            p.Email
+            FROM Appointments a
+            JOIN Patients p ON p.IdPatient = a.IdPatient
+            ORDER BY a.AppointmentDate";
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync();
 
@@ -28,7 +38,11 @@ public class AppointmentService : IAppointmentService
             var appointment = new AppointmentListDto()
             {
                 IdAppointment = reader.GetInt32(0),
-                Status = reader.GetString(1)
+                AppointmentDate = reader.GetDateTime(1),
+                Status = reader.GetString(2),
+                Reason = reader.GetString(3),
+                PatientFullName = reader.GetString(4),
+                PatientEmail = reader.GetString(5)
             };
             appointments.Add(appointment);
         }
