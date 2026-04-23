@@ -25,6 +25,8 @@ public class AppointmentService : IAppointmentService
             p.Email
             FROM Appointments a
             JOIN Patients p ON p.IdPatient = a.IdPatient
+            WHERE (@Status IS NULL OR a.Status = @Status)
+                AND (@PatientLastName IS NULL OR p.LastName = @PatientLastName)
             ORDER BY a.AppointmentDate";
         
         var appointments = new List<AppointmentListDto>();
