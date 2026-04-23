@@ -154,11 +154,12 @@ public class AppointmentService : IAppointmentService
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync();
         var checkAppointmentCmd = new SqlCommand(
-            "SELECT Status, IdDoctor FROM Appointments WHERE IdAppointment = @Id",
+            "SELECT Status, IdDoctor, AppointmentDate FROM Appointments WHERE IdAppointment = @Id",
             connection);
         checkAppointmentCmd.Parameters.Add("@Id", SqlDbType.Int).Value = idAppointment;
         string? currentStatus = null;
         int currentDoctorID = 0;
+        DateTime originalAppointmentDate = default;
 
         await using (var reader = await checkAppointmentCmd.ExecuteReaderAsync())
         {
@@ -184,7 +185,7 @@ public class AppointmentService : IAppointmentService
         if(!allowedStatuses.Contains(dto.Status))
             throw new Exception("INVALID_STATUS");
 
-        if (currentStatus == "Completed" && dto.AppointmentDate != dto.AppointmentDate)
+        if (currentStatus == "Completed" && dto.AppointmentDate != originalAppointmentDate)
         {
             throw new Exception("CANNOT_CHANGE_DATE");
         }
