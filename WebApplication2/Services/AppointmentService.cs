@@ -55,4 +55,39 @@ public class AppointmentService : IAppointmentService
         }
         return appointments;
     }
+
+    public async Task<AppointmentDetailsDTO> getAppointmentByIdAsync(int idAppointment)
+    {
+
+        var query =
+            @"SELECT a.IdAppointment,a.AppointmentDate, a.Status,a.Reason,p.FirstName + ' ' + p.LastName AS PatientFullName,p.Email AS PatientEmail,
+                     p.Phone AS PatientPhone, d.FirstName + ' ' + d.LastName AS DoctorFullName, d.LicenseNumber AS DoctorLicenseNumber, s.Name as SpecializationName, a.InternalNotes,a.CreatedAt
+                     FROM Appointments a
+                     JOIN Patients p ON p.IdPatient = a.IdPatient
+                     JOIN  Doctors d ON d.IdDoctor = a.IdDoctor
+                     JOIN  Specializations s ON d.IdSpecialization = s.IdSpecialization
+                     WHERE A.idAppointment = @idAppointment";
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+        await using var command = new SqlCommand(query,connection);
+        command.Parameters.Add("@idAppointment", SqlDbType.Int).Value = idAppointment;
+        await using var reader = await command.ExecuteReaderAsync();
+        if(!await reader.ReadAsync())
+            return null;
+        return new AppointmentDetailsDTO()
+        {
+            IdAppointment = reader.GetInt32(0),
+            AppointmentDate = reader.GetDateTime(1),
+            Status = reader.GetString(2),
+            Reason = reader.GetString(3),
+            PatientFullName = reader.GetString(4),
+            PatientEmail = reader.GetString(5),
+            PatientPhone = reader.GetString(6),
+            DoctorFullName = reader.GetString(7),
+            DoctorLicense = reader.GetString(8),
+            SpecializationName = reader.GetString(9),
+            InternalNotes = reader.IsDBNull(10) ? null : reader.GetString(10),
+            CreatedAt = reader.GetDateTime(11)
+        };
+    }
 }
